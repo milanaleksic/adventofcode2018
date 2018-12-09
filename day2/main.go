@@ -14,14 +14,14 @@ func main() {
 	}
 	defer file.Close()
 
-	list := list.New()
-	readAll(file, list)
+	ls := list.New()
+	readAll(file, ls)
 
 	count2 := 0
 	count3 := 0
 
 	// part 1
-	for line := list.Front(); line != nil; line = line.Next() {
+	for line := ls.Front(); line != nil; line = line.Next() {
 		counts := make(map[rune]int)
 		for _, c := range line.Value.(string) {
 			count, ok := counts[c]
@@ -50,8 +50,8 @@ func main() {
 	println(count2 * count3)
 
 	// part 2
-	for line1 := list.Front(); line1 != nil; line1 = line1.Next() {
-		for line2 := list.Front(); line2 != nil; line2 = line2.Next() {
+	for line1 := ls.Front(); line1 != nil; line1 = line1.Next() {
+		for line2 := ls.Front(); line2 != nil; line2 = line2.Next() {
 			if line1 == line2 {
 				continue
 			}

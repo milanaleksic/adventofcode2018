@@ -27,8 +27,8 @@ func main() {
 	}
 	defer file.Close()
 
-	list := list.New()
-	readAll(file, list)
+	ls := list.New()
+	readAll(file, ls)
 
 	// #1 @ 1,3: 4x4
 	regex, err := regexp.Compile("#(\\d+) @ (\\d+),(\\d+): (\\d+)x(\\d+)")
@@ -40,7 +40,7 @@ func main() {
 	knownClaims := make(map[int]bool)
 
 	// part 1
-	for line := list.Front(); line != nil; line = line.Next() {
+	for line := ls.Front(); line != nil; line = line.Next() {
 		matches := regex.FindAllStringSubmatch(line.Value.(string), -1)[0]
 		id, err := strconv.Atoi(matches[1])
 		if err != nil {

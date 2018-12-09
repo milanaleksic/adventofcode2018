@@ -16,12 +16,12 @@ func main() {
 	}
 	defer file.Close()
 
-	list := list.New()
-	readAll(file, list)
+	ls := list.New()
+	readAll(file, ls)
 
 	// part 1
 	iter := 0
-	for e := list.Front(); e != nil; e = e.Next() {
+	for e := ls.Front(); e != nil; e = e.Next() {
 		iter += e.Value.(int)
 	}
 	fmt.Println("Result: (part 1)", iter)
@@ -30,7 +30,7 @@ func main() {
 	cache := make(map[int]bool)
 	iter2 := 0
 	for {
-		for e := list.Front(); e != nil; e = e.Next() {
+		for e := ls.Front(); e != nil; e = e.Next() {
 			iter2 += e.Value.(int)
 			_, ok := cache[iter2]
 			if ok {
