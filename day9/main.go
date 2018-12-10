@@ -85,9 +85,8 @@ func part1(noPlayers int, lastMarbleWorth int) {
 			//fmt.Printf("------------\nmarble=%d iter=%d loc=%d before=%v\n", marble, iter, loc, playingField)
 			if loc == len(playingField)+1 || loc == 0 {
 				//fmt.Println("Adding to the end only!")
-				playingField = append(playingField, 0)
-				playingField[len(playingField)-1] = marble
-				loc = marble
+				playingField = append(playingField, marble)
+				loc = len(playingField) - 1
 			} else {
 				//fmt.Printf("combining like this: ...:%d and %d:..., len=%v\n", loc, loc, len(playingField))
 				newPlayingField := make([]int, len(playingField)+1)
