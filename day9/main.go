@@ -63,18 +63,22 @@ func part1(noPlayers int, lastMarbleWorth int) {
 		marble++
 		player := players[marble%noPlayers]
 		if marble%23 == 0 {
-			// TODO
 			//fmt.Printf("------------\nPlayer %d should get some points\n", player)
-			player.points += marble
 			iter -= 7
 			if iter >= 0 {
-				loc = (iter) % (len(playingField))
+				loc = iter % len(playingField)
 			} else {
 				loc = len(playingField) + iter
 			}
 			//fmt.Printf("len=%v, loc=%v\n", len(playingField), loc)
+			player.points += marble
 			player.points += playingField[loc]
+			prev := len(playingField)
 			playingField = append(playingField[:loc], playingField[loc+1:]...)
+			if len(playingField) != prev-1 {
+				log.Fatalf("Wrong size!")
+				break
+			}
 		} else {
 			iter += 2
 			loc = iter % marble
