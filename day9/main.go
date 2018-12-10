@@ -11,10 +11,10 @@ import (
 )
 
 // test
-const input = "day9/test.txt"
+//const input = "day9/test.txt"
 
 //production
-//const input = "day9/input.txt"
+const input = "day9/input.txt"
 
 func main() {
 	file, err := os.Open(input)
@@ -49,7 +49,7 @@ type player struct {
 	points int
 }
 
-func part1(noPlayers int, lastMarbleWorth int) {
+func part1(noPlayers int, lastMarbleWorth int) int {
 	players := make([]*player, noPlayers)
 	for i := 0; i < noPlayers; i++ {
 		players[i] = &player{}
@@ -81,9 +81,9 @@ func part1(noPlayers int, lastMarbleWorth int) {
 			}
 		} else {
 			iter += 2
-			loc = iter % marble
-			//fmt.Printf("------------\nmarble=%d iter=%d loc=%d before=%v\n", marble, iter, loc, playingField)
-			if loc == len(playingField)+1 || loc == 0 {
+			loc = iter % len(playingField)
+			//fmt.Printf("------------\nmarble=%d iter=%d loc=%d len(playingField)=%v before=%v\n", marble, iter, loc, len(playingField)+1, playingField)
+			if loc == 0 {
 				//fmt.Println("Adding to the end only!")
 				playingField = append(playingField, marble)
 				loc = len(playingField) - 1
@@ -100,13 +100,9 @@ func part1(noPlayers int, lastMarbleWorth int) {
 				playingField = newPlayingField
 			}
 			//fmt.Printf("after: %v of size %d\n", playingField, len(playingField))
-			//expectedCount++
-			//if len(playingField) != expectedCount-1 {
-			//	log.Fatalln("Failure", len(playingField), marble+1)
-			//}
 		}
 		if marble >= lastMarbleWorth {
-			fmt.Printf("Final: %v\n", playingField)
+			//fmt.Printf("Final: %v\n", playingField)
 			break
 		}
 	}
@@ -117,6 +113,7 @@ func part1(noPlayers int, lastMarbleWorth int) {
 		}
 	}
 	fmt.Printf("Solution is: %v\n", max)
+	return max
 }
 
 func readAll(file *os.File, list *list.List) {
