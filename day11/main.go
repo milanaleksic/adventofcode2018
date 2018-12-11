@@ -10,13 +10,6 @@ import (
 	"strconv"
 )
 
-type point struct {
-	x         int
-	y         int
-	velocityX int
-	velocityY int
-}
-
 func main() {
 	file, err := os.Open("day11/input.txt")
 	//file, err := os.Open("day11/test.txt")
@@ -56,6 +49,23 @@ func main() {
 
 	maxValue, solutionX, solutionY := part1(maxX, maxY, serialNumber, 3)
 	fmt.Printf("Solution is: %d at coordinate %d,%d", maxValue, solutionX, solutionY)
+	maxValue2, solutionX2, solutionY2, blockSize2 := part2(maxX, maxY, serialNumber)
+	fmt.Printf("Solution 2 is: %d at coordinate %d,%d,%d", maxValue2, solutionX2, solutionY2, blockSize2)
+}
+
+func part2(maxX int, maxY int, serialNumber int) (int, int, int, int) {
+	var maxValue2, solutionX2, solutionY2, blockSize2 int
+	//for blockSize := 3; blockSize < maxX-1; blockSize++ {
+	for blockSize := 12; blockSize <= 16; blockSize++ {
+		fmt.Printf("Exploring block size %d/%d\n", blockSize, maxX-1)
+		maxValue, solutionX, solutionY := part1(maxX, maxY, serialNumber, blockSize)
+		if maxValue > maxValue2 {
+			maxValue2, solutionX2, solutionY2 = maxValue, solutionX, solutionY
+			blockSize2 = blockSize
+			fmt.Printf("New maximum found at: %d,%d (%d)\n", solutionX, solutionY, maxValue)
+		}
+	}
+	return maxValue2, solutionX2, solutionY2, blockSize2
 }
 
 func part1(maxX, maxY, serialNumber, blockSize int) (maxValue, solutionX, solutionY int) {
@@ -72,15 +82,19 @@ func part1(maxX, maxY, serialNumber, blockSize int) (maxValue, solutionX, soluti
 	//	}
 	//	fmt.Println()
 	//}
-	for y := blockSize/2 + 1; y < maxY-blockSize/2; y++ {
-		for x := blockSize/2 + 1; x < maxX-blockSize/2; x++ {
-			v := field[linear(x-1, y-1, maxX)] + field[linear(x, y-1, maxX)] + field[linear(x+1, y-1, maxX)]
-			v += field[linear(x-1, y, maxX)] + field[linear(x, y, maxX)] + field[linear(x+1, y, maxX)]
-			v += field[linear(x-1, y+1, maxX)] + field[linear(x, y+1, maxX)] + field[linear(x+1, y+1, maxX)]
+	rangeBlock := blockSize / 2
+	for y := rangeBlock + 1; y < maxY-rangeBlock; y++ {
+		for x := rangeBlock + 1; x < maxX-rangeBlock; x++ {
+			v := 0
+			for i := x - rangeBlock; i < x+rangeBlock; i++ {
+				for j := y - rangeBlock; j < y+rangeBlock; j++ {
+					v += field[linear(i, j, maxX)]
+				}
+			}
 			if v > maxValue {
 				maxValue = v
-				solutionX = x - 1
-				solutionY = y - 1
+				solutionX = x - rangeBlock
+				solutionY = y - rangeBlock
 				//fmt.Printf("New maximum found at: %d,%d (%d)\n", x-1, y-1, maxValue)
 			}
 		}

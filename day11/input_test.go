@@ -37,3 +37,20 @@ func TestSolution1(t *testing.T) {
 		}
 	}
 }
+
+func TestSolution2(t *testing.T) {
+	values := []struct {
+		x, y, serial, expectedX, expectedY, expectedBlockSize int
+	}{
+		{300, 300, 18, 90, 269, 16},
+		{300, 300, 42, 232, 251, 12},
+	}
+	for _, v := range values {
+		_, solutionX, solutionY, blockSize := part2(v.x, v.y, v.serial)
+		if solutionX != v.expectedX || solutionY != v.expectedY || blockSize != v.expectedBlockSize {
+			t.Errorf("Failed to match result %d,%d,%d; expected %d,%d,%d", solutionX, solutionY, blockSize, v.expectedX, v.expectedY, v.expectedBlockSize)
+		} else {
+			t.Log("Match!")
+		}
+	}
+}
