@@ -158,13 +158,6 @@ func main() {
 const scaledMaxX float64 = 540
 const scaledMaxY float64 = 540
 
-func linear(x int, minX int, y int, minY int, maxX int, maxY int) int {
-	scaledX := scaledMaxX * float64(x-minX) / float64(maxX-minX)
-	scaledY := scaledMaxY * float64(y-minY) / float64(maxY-minY)
-	result := (int)(scaledX + scaledY*scaledMaxX)
-	return result
-}
-
 func readAll(file *os.File, list *list.List) {
 	scanner := bufio.NewScanner(file)
 	for scanner.Scan() {
