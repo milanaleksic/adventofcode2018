@@ -55,8 +55,8 @@ func main() {
 
 func part2(maxX int, maxY int, serialNumber int) (int, int, int, int) {
 	var maxValue2, solutionX2, solutionY2, blockSize2 int
-	//for blockSize := 3; blockSize < maxX-1; blockSize++ {
-	for blockSize := 12; blockSize <= 16; blockSize++ {
+	for blockSize := 3; blockSize < maxX-1; blockSize++ {
+		//for blockSize := 12; blockSize <= 16; blockSize++ {
 		fmt.Printf("Exploring block size %d/%d\n", blockSize, maxX-1)
 		maxValue, solutionX, solutionY := part1(maxX, maxY, serialNumber, blockSize)
 		if maxValue > maxValue2 {
@@ -82,19 +82,19 @@ func part1(maxX, maxY, serialNumber, blockSize int) (maxValue, solutionX, soluti
 	//	}
 	//	fmt.Println()
 	//}
-	rangeBlock := blockSize / 2
-	for y := rangeBlock + 1; y < maxY-rangeBlock; y++ {
-		for x := rangeBlock + 1; x < maxX-rangeBlock; x++ {
+	for y := 1; y <= maxY-blockSize; y++ {
+		for x := 1; x <= maxX-blockSize; x++ {
 			v := 0
-			for i := x - rangeBlock; i < x+rangeBlock; i++ {
-				for j := y - rangeBlock; j < y+rangeBlock; j++ {
+			for i := x; i < x+blockSize; i++ {
+				for j := y; j < y+blockSize; j++ {
+					//fmt.Println("Accessing i,j=",i,j)
 					v += field[linear(i, j, maxX)]
 				}
 			}
 			if v > maxValue {
 				maxValue = v
-				solutionX = x - rangeBlock
-				solutionY = y - rangeBlock
+				solutionX = x
+				solutionY = y
 				//fmt.Printf("New maximum found at: %d,%d (%d)\n", x-1, y-1, maxValue)
 			}
 		}
