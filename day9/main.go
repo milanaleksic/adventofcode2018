@@ -42,6 +42,7 @@ func main() {
 		}
 		fmt.Printf("Found players=%d, lastMarble=%d\n", players, lastMarble)
 		part1(players, lastMarble)
+		part1(players, lastMarble*100)
 	}
 }
 
@@ -61,6 +62,9 @@ func part1(noPlayers int, lastMarbleWorth int) int {
 	for {
 		iter = loc
 		marble++
+		if marble%100000 == 0 {
+			fmt.Println("Reached marble", marble)
+		}
 		player := players[marble%noPlayers]
 		if marble%23 == 0 {
 			//fmt.Printf("------------\nPlayer %d should get some points\n", player)
