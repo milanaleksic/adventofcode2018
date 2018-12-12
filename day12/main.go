@@ -11,8 +11,8 @@ import (
 )
 
 func main() {
-	//file, err := os.Open("day12/input.txt")
-	file, err := os.Open("day12/test.txt")
+	file, err := os.Open("day12/input.txt")
+	//file, err := os.Open("day12/test.txt")
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -35,26 +35,36 @@ func main() {
 	matchesInitial := regexInitial.FindAllStringSubmatch(line.Value.(string), -1)[0]
 	initialStateString := matchesInitial[1]
 	//fmt.Println(initialStateString)
-	state := make([]byte, len(initialStateString))
+	stateInitial := make([]byte, len(initialStateString))
 	for i, s := range initialStateString {
-		state[i] = toByte(s)
+		stateInitial[i] = toByte(s)
 	}
-	fmt.Printf("Initially: %+v\n", state)
+	//fmt.Printf("Initially: %+v\n", state)
 
 	line = line.Next().Next()
 	ops := make(map[string]byte)
 	for ; line != nil; line = line.Next() {
 		lineValue := line.Value.(string)
-		fmt.Printf("Analyzing line %s\n", lineValue)
+		//fmt.Printf("Analyzing line %s\n", lineValue)
 		matches := regexOperation.FindAllStringSubmatch(lineValue, -1)[0]
 		op := toByte(int32(matches[2][0]))
 		stateMatch := matches[1]
 		ops[stateMatch] = op
-		fmt.Printf("Found stateTransition: %+v -> %d\n", stateMatch, op)
+		//fmt.Printf("Found stateTransition: %+v -> %d\n", stateMatch, op)
 	}
-	for g := 1; g <= 20; g++ {
-		nextGen := make([]byte, len(state)+4) // adding 2 left and right
-		for i := 0; i < len(state); i++ {
+	ln := len(stateInitial) + 1000
+	state := make([]byte, ln)
+	for i := 40; i < 40+len(stateInitial); i++ {
+		if stateInitial[i-40] == 1 {
+			state[i] = 1
+		}
+	}
+	prevPrevPrevSum := 0
+	prevPrevSum := 0
+	prevSum := 0
+	for g := 1; g <= 1000; g++ {
+		nextGen := make([]byte, ln) // adding 2 left and right
+		for i := 2; i < len(state)-2; i++ {
 			for stateMatch, op := range ops {
 				stateBytes := make([]byte, 0)
 				for j := i - 2; j <= i+2; j++ {
@@ -77,28 +87,37 @@ func main() {
 				}
 				if match {
 					//fmt.Printf("Applying op %d on index %d since match was ok: %s\n", op, i, stateMatch)
-					nextGen[i+2] = op
+					nextGen[i] = op
 				}
 			}
 		}
 		state = nextGen
-		fmt.Printf("Generation %02d: ", g)
-		for i := 0 + (g-1)*2; i < len(state); i++ {
+
+		solution := 0
+		for i := 0; i < len(state); i++ {
 			if state[i] == 1 {
+				solution += i - 40
+			}
+		}
+		fmt.Printf("Generation %02d (running sum = %d): ", g, solution)
+		if solution-prevSum == prevSum-prevPrevSum && prevSum-prevPrevSum == prevPrevSum-prevPrevPrevSum {
+			fmt.Println("Pattern identified, constant sum: ", solution-prevSum)
+			fmt.Printf("Final solution is: %d\n", solution+(50000000000-g)*(solution-prevSum))
+			break
+		}
+		prevPrevPrevSum = prevPrevSum
+		prevPrevSum = prevSum
+		prevSum = solution
+		for i := 0; i < len(nextGen); i++ {
+			if nextGen[i] == 1 {
 				fmt.Printf("#")
 			} else {
 				fmt.Printf(".")
 			}
 		}
 		fmt.Printf("\n")
+		//time.Sleep(100*time.Millisecond)
 	}
-	solution := 0
-	for i := 0; i < len(state); i++ {
-		if state[i] == 1 {
-			solution += i - 40
-		}
-	}
-	fmt.Printf("Solution for 1 is: %d", solution)
 
 	//maxValue, solutionX, solutionY := part1(maxX, maxY, serialNumber, 3)
 	//fmt.Printf("Solution is: %d at coordinate %d,%d", maxValue, solutionX, solutionY)
