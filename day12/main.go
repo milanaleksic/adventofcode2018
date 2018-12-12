@@ -11,8 +11,8 @@ import (
 )
 
 func main() {
-	file, err := os.Open("day12/input.txt")
-	//file, err := os.Open("day12/test.txt")
+	//file, err := os.Open("day12/input.txt")
+	file, err := os.Open("day12/test.txt")
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -54,9 +54,6 @@ func main() {
 	}
 	for g := 1; g <= 20; g++ {
 		nextGen := make([]byte, len(state)+4) // adding 2 left and right
-		//for i := 0; i < len(state); i++ {
-		//	nextGen[i+2] = state[i]
-		//}
 		for i := 0; i < len(state); i++ {
 			for stateMatch, op := range ops {
 				stateBytes := make([]byte, 0)
@@ -79,13 +76,21 @@ func main() {
 					}
 				}
 				if match {
-					//fmt.Printf("Applying op %d on index %d\n", op, i+2)
+					//fmt.Printf("Applying op %d on index %d since match was ok: %s\n", op, i, stateMatch)
 					nextGen[i+2] = op
 				}
 			}
 		}
 		state = nextGen
-		fmt.Printf("Generation %02d: %+v\n", g, state)
+		fmt.Printf("Generation %02d: ", g)
+		for i := 0 + (g-1)*2; i < len(state); i++ {
+			if state[i] == 1 {
+				fmt.Printf("#")
+			} else {
+				fmt.Printf(".")
+			}
+		}
+		fmt.Printf("\n")
 	}
 	solution := 0
 	for i := 0; i < len(state); i++ {
