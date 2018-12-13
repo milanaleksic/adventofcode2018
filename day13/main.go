@@ -8,10 +8,23 @@ import (
 	"os"
 )
 
+type turn int
+
+const (
+	left turn = iota
+	straight
+	right
+)
+
+type driver struct {
+	direction cellType
+	lastTick  int
+	lastTurn  turn
+}
+
 type cell struct {
-	driver     cellType
+	driver     *driver
 	underlying cellType
-	lastTick   int
 }
 
 type cellType byte
@@ -34,8 +47,8 @@ const (
 )
 
 func main() {
-	//file, err := os.Open("day13/input.txt")
-	file, err := os.Open("day13/test.txt")
+	file, err := os.Open("day13/input.txt")
+	//file, err := os.Open("day13/test.txt")
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -72,79 +85,127 @@ func part1(maxX, maxY int, track []*cell) (int, int) {
 			for x := 0; x < maxX; x++ {
 				cur := track[linear(x, y, maxX, maxY)]
 				var target *cell
-				if cur.lastTick >= tick {
+				if cur.driver.lastTick >= tick {
 					continue
 				}
-				switch cur.driver {
+				switch cur.driver.direction {
 				case DRIVER_NS:
 					target = track[linear(x, y+1, maxX, maxY)]
+					if target.driver.direction != DRIVER_NONE {
+						return x, y + 1
+					}
 					switch target.underlying {
 					case NE_SW:
-						cur.driver = DRIVER_WE
+						cur.driver.direction = DRIVER_WE
 					case SE_NW:
-						cur.driver = DRIVER_EW
+						cur.driver.direction = DRIVER_EW
+					case NS_WE:
+						nextTurn := nextTurn(cur.driver.lastTurn)
+						switch nextTurn {
+						case left:
+							cur.driver.direction = DRIVER_WE
+						case right:
+							cur.driver.direction = DRIVER_EW
+						}
+						cur.driver.lastTurn = nextTurn
 					}
 				case DRIVER_SN:
 					target = track[linear(x, y-1, maxX, maxY)]
+					if target.driver.direction != DRIVER_NONE {
+						return x, y - 1
+					}
 					switch target.underlying {
 					case NE_SW:
-						cur.driver = DRIVER_EW
+						cur.driver.direction = DRIVER_EW
 					case SE_NW:
-						cur.driver = DRIVER_WE
+						cur.driver.direction = DRIVER_WE
+					case NS_WE:
+						nextTurn := nextTurn(cur.driver.lastTurn)
+						switch nextTurn {
+						case left:
+							cur.driver.direction = DRIVER_EW
+						case right:
+							cur.driver.direction = DRIVER_WE
+						}
+						cur.driver.lastTurn = nextTurn
 					}
 				case DRIVER_WE:
 					target = track[linear(x+1, y, maxX, maxY)]
+					if target.driver.direction != DRIVER_NONE {
+						return x + 1, y
+					}
 					switch target.underlying {
 					case NE_SW:
-						cur.driver = DRIVER_NS
+						cur.driver.direction = DRIVER_NS
 					case SE_NW:
-						cur.driver = DRIVER_SN
+						cur.driver.direction = DRIVER_SN
+					case NS_WE:
+						nextTurn := nextTurn(cur.driver.lastTurn)
+						switch nextTurn {
+						case left:
+							cur.driver.direction = DRIVER_SN
+						case right:
+							cur.driver.direction = DRIVER_NS
+						}
+						cur.driver.lastTurn = nextTurn
 					}
 				case DRIVER_EW:
 					target = track[linear(x-1, y, maxX, maxY)]
+					if target.driver.direction != DRIVER_NONE {
+						return x - 1, y
+					}
 					switch target.underlying {
 					case NE_SW:
-						cur.driver = DRIVER_SN
+						cur.driver.direction = DRIVER_SN
 					case SE_NW:
-						cur.driver = DRIVER_NS
+						cur.driver.direction = DRIVER_NS
+					case NS_WE:
+						nextTurn := nextTurn(cur.driver.lastTurn)
+						switch nextTurn {
+						case left:
+							cur.driver.direction = DRIVER_NS
+						case right:
+							cur.driver.direction = DRIVER_SN
+						}
+						cur.driver.lastTurn = nextTurn
 					}
 				default:
 					continue
 				}
-				if target.driver != DRIVER_NONE {
-					return x, y
-				}
-				target.driver = cur.driver
-				cur.driver = DRIVER_NONE
-				target.lastTick = tick
+				target.driver.direction = cur.driver.direction
+				target.driver.lastTurn = cur.driver.lastTurn
+				target.driver.lastTick = tick
+				cur.driver.direction = DRIVER_NONE
 			}
 		}
-		printState(tick, maxY, maxX, track)
+		//printState(tick, maxY, maxX, track)
 	}
 	return 0, 0
 }
 
 func deduceCell(cellContents byte) (result *cell) {
 	result = &cell{
-		lastTick: 0,
+		driver: &driver{
+			lastTurn: right,
+		},
 	}
 	c := cellType(cellContents)
 	switch c {
 	case DRIVER_NS:
 		result.underlying = NS
-		result.driver = c
+		result.driver.direction = c
 	case DRIVER_SN:
 		result.underlying = NS
-		result.driver = c
+		result.driver.direction = c
 	case DRIVER_WE:
 		result.underlying = WE
-		result.driver = c
+		result.driver.direction = c
 	case DRIVER_EW:
 		result.underlying = WE
-		result.driver = c
+		result.driver.direction = c
 	default:
 		result.underlying = c
-		result.driver = DRIVER_NONE
+		result.driver.direction = DRIVER_NONE
 	}
 	return
 }
@@ -154,8 +215,8 @@ func printState(tick int, maxY int, maxX int, track []*cell) {
 	for y := 0; y < maxY; y++ {
 		for x := 0; x < maxX; x++ {
 			c := track[linear(x, y, maxX, maxY)]
-			if c.driver != DRIVER_NONE {
-				fmt.Printf("%v", c.driver)
+			if c.driver.direction != DRIVER_NONE {
+				fmt.Printf("%v", c.driver.direction)
 			} else {
 				fmt.Printf("%v", c.underlying)
 			}
@@ -185,4 +246,12 @@ func readAll(file *os.File, list *list.List) {
 	if err := scanner.Err(); err != nil {
 		log.Fatal(err)
 	}
+}
+
+func nextTurn(lastTurn turn) (result turn) {
+	result = lastTurn + 1
+	if result == right+1 {
+		result = left
+	}
+	return
 }
