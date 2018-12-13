@@ -44,11 +44,13 @@ const (
 	DRIVER_WE   cellType = '>'
 	DRIVER_SN   cellType = '^'
 	DRIVER_NONE cellType = '?'
+	EMPTY       cellType = ' '
 )
 
 func main() {
 	file, err := os.Open("day13/input.txt")
 	//file, err := os.Open("day13/test.txt")
+	//file, err := os.Open("day13/test2.txt")
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -74,8 +76,10 @@ func main() {
 			track[linear(x, y, maxX, maxY)] = deduceCell(line[x])
 		}
 	}
-	x, y := part1(maxX, maxY, track)
-	fmt.Printf("Collision on: %v,%v", x, y)
+	//x, y := part1(maxX, maxY, track)
+	//fmt.Printf("Solution part 1 is: %v,%v", x, y)
+	x, y := part2(maxX, maxY, track)
+	fmt.Printf("Solution part 2 is: %v,%v", x, y)
 }
 
 func part1(maxX, maxY int, track []*cell) (int, int) {
@@ -181,6 +185,138 @@ func part1(maxX, maxY int, track []*cell) (int, int) {
 		//printState(tick, maxY, maxX, track)
 	}
 	return 0, 0
+}
+
+func part2(maxX, maxY int, track []*cell) (int, int) {
+	maxTick := 100000
+	for tick := 0; tick < maxTick; tick++ {
+		for y := 0; y < maxY; y++ {
+			for x := 0; x < maxX; x++ {
+				cur := track[linear(x, y, maxX, maxY)]
+				var target *cell
+				if cur.driver.lastTick >= tick {
+					continue
+				}
+				switch cur.driver.direction {
+				case DRIVER_NS:
+					target = track[linear(x, y+1, maxX, maxY)]
+					if target.driver.direction != DRIVER_NONE {
+						cur.driver.direction = DRIVER_NONE
+						target.driver.direction = DRIVER_NONE
+					} else {
+						switch target.underlying {
+						case NE_SW:
+							cur.driver.direction = DRIVER_WE
+						case SE_NW:
+							cur.driver.direction = DRIVER_EW
+						case NS_WE:
+							nextTurn := nextTurn(cur.driver.lastTurn)
+							switch nextTurn {
+							case left:
+								cur.driver.direction = DRIVER_WE
+							case right:
+								cur.driver.direction = DRIVER_EW
+							}
+							cur.driver.lastTurn = nextTurn
+						}
+					}
+				case DRIVER_SN:
+					target = track[linear(x, y-1, maxX, maxY)]
+					if target.driver.direction != DRIVER_NONE {
+						cur.driver.direction = DRIVER_NONE
+						target.driver.direction = DRIVER_NONE
+					} else {
+						switch target.underlying {
+						case NE_SW:
+							cur.driver.direction = DRIVER_EW
+						case SE_NW:
+							cur.driver.direction = DRIVER_WE
+						case NS_WE:
+							nextTurn := nextTurn(cur.driver.lastTurn)
+							switch nextTurn {
+							case left:
+								cur.driver.direction = DRIVER_EW
+							case right:
+								cur.driver.direction = DRIVER_WE
+							}
+							cur.driver.lastTurn = nextTurn
+						}
+					}
+				case DRIVER_WE:
+					target = track[linear(x+1, y, maxX, maxY)]
+					if target.driver.direction != DRIVER_NONE {
+						cur.driver.direction = DRIVER_NONE
+						target.driver.direction = DRIVER_NONE
+					} else {
+						switch target.underlying {
+						case NE_SW:
+							cur.driver.direction = DRIVER_NS
+						case SE_NW:
+							cur.driver.direction = DRIVER_SN
+						case NS_WE:
+							nextTurn := nextTurn(cur.driver.lastTurn)
+							switch nextTurn {
+							case left:
+								cur.driver.direction = DRIVER_SN
+							case right:
+								cur.driver.direction = DRIVER_NS
+							}
+							cur.driver.lastTurn = nextTurn
+						}
+					}
+				case DRIVER_EW:
+					target = track[linear(x-1, y, maxX, maxY)]
+					if target.driver.direction != DRIVER_NONE {
+						cur.driver.direction = DRIVER_NONE
+						target.driver.direction = DRIVER_NONE
+					} else {
+						switch target.underlying {
+						case NE_SW:
+							cur.driver.direction = DRIVER_SN
+						case SE_NW:
+							cur.driver.direction = DRIVER_NS
+						case NS_WE:
+							nextTurn := nextTurn(cur.driver.lastTurn)
+							switch nextTurn {
+							case left:
+								cur.driver.direction = DRIVER_NS
+							case right:
+								cur.driver.direction = DRIVER_SN
+							}
+							cur.driver.lastTurn = nextTurn
+						}
+					}
+				default:
+					continue
+				}
+				if cur.driver.direction != DRIVER_NONE {
+					target.driver.direction = cur.driver.direction
+					target.driver.lastTurn = cur.driver.lastTurn
+					target.driver.lastTick = tick
+					cur.driver.direction = DRIVER_NONE
+				}
+			}
+		}
+		//printState(tick, maxY, maxX, track)
+		if lx, ly, last := checkIfLast(maxX, maxY, track); last {
+			return lx, ly
+		}
+	}
+	return 0, 0
+}
+
+func checkIfLast(maxX, maxY int, cells []*cell) (lastX int, lastY int, last bool) {
+	countRemaining := 0
+	for y := 0; y < maxY; y++ {
+		for x := 0; x < maxX; x++ {
+			if cells[linear(x, y, maxX, maxY)].driver.direction != DRIVER_NONE {
+				countRemaining++
+				lastX = x
+				lastY = y
+			}
+		}
+	}
+	return lastX, lastY, countRemaining == 1
 }
 
 func deduceCell(cellContents byte) (result *cell) {
