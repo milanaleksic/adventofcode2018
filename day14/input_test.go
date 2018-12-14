@@ -21,3 +21,23 @@ func TestInput1(t *testing.T) {
 		}
 	}
 }
+
+func TestInput2(t *testing.T) {
+	values := []struct {
+		recipeScores string
+		expected     int
+	}{
+		{"51589", 9},
+		{"01245", 5},
+		{"92510", 18},
+		{"59414", 2018},
+	}
+	for _, v := range values {
+		actual := part2(v.recipeScores)
+		if v.expected != actual {
+			t.Errorf("Failed to match result %d; expected %d", actual, v.expected)
+		} else {
+			t.Log("Match!")
+		}
+	}
+}
