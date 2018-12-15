@@ -38,9 +38,8 @@ const (
 )
 
 func main() {
-	//file, err := os.Open("day15/input.txt")
+	file, err := os.Open("day15/input.txt")
 	//file, err := os.Open("day15/test.txt")
-	file, err := os.Open("day15/test2.txt")
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -76,26 +75,9 @@ func fromInput(ls *list.List) (int, int, []*cell) {
 }
 
 func part1(maxX, maxY int, track []*cell) (maxReachedTick int, result int) {
-	maxTick := 50
+	maxTick := 500
 	for tick := 0; tick < maxTick; tick++ {
 		fmt.Println("######################### TICK:", tick)
-		kindsOfEnemies := 0
-		for y := 0; y < maxY; y++ {
-			for x := 0; x < maxX; x++ {
-				iter := track[linear(x, y, maxX, maxY)]
-				if iter.player != nil {
-					if iter.player.plType == ELF {
-						kindsOfEnemies |= 1
-					} else if iter.player.plType == GOBLIN {
-						kindsOfEnemies |= 2
-					}
-				}
-			}
-		}
-		if kindsOfEnemies != 3 {
-			fmt.Println("Not enough enemy types left on the field!")
-			return tick - 1, (tick - 1) * sumState(maxX, maxY, track)
-		}
 		for y := 0; y < maxY; y++ {
 			for x := 0; x < maxX; x++ {
 				cur := track[linear(x, y, maxX, maxY)]
@@ -110,6 +92,23 @@ func part1(maxX, maxY int, track []*cell) (maxReachedTick int, result int) {
 					cur.player = nil
 					attackPhase(newX, newY, maxX, maxY, track)
 				} else {
+					kindsOfEnemies := 0
+					for y := 0; y < maxY; y++ {
+						for x := 0; x < maxX; x++ {
+							iter := track[linear(x, y, maxX, maxY)]
+							if iter.player != nil {
+								if iter.player.plType == ELF {
+									kindsOfEnemies |= 1
+								} else if iter.player.plType == GOBLIN {
+									kindsOfEnemies |= 2
+								}
+							}
+						}
+					}
+					if kindsOfEnemies != 3 {
+						fmt.Println("Not enough enemy types left on the field!")
+						return tick - 1, (tick - 1) * sumState(maxX, maxY, track)
+					}
 					attackPhase(x, y, maxX, maxY, track)
 				}
 			}
@@ -151,11 +150,11 @@ func hasEnemyAround(x int, y int, maxX int, maxY int, track []*cell) bool {
 	return false
 }
 
-func attackPhase(x int, y int, maxX int, maxY int, track []*cell) {
+func attackPhase(x int, y int, maxX int, maxY int, track []*cell) bool {
 	var targets = make([]*cell, 0)
 	source := track[linear(x, y, maxX, maxY)]
 	if source.player == nil {
-		return
+		return false
 	}
 	if neighbor, ok := isEnemy(x, y-1, maxX, maxY, track, source); ok {
 		targets = append(targets, neighbor)
@@ -170,7 +169,7 @@ func attackPhase(x int, y int, maxX int, maxY int, track []*cell) {
 		targets = append(targets, neighbor)
 	}
 	if len(targets) == 0 {
-		return
+		return false
 	}
 	minTargetPoints := -1
 	var chosenTarget *cell
@@ -184,7 +183,9 @@ func attackPhase(x int, y int, maxX int, maxY int, track []*cell) {
 	if chosenTarget.player.hitPoints <= 0 {
 		fmt.Printf("player died on %v,%v\n", chosenTarget.x, chosenTarget.y)
 		chosenTarget.player = nil
+		return true
 	}
+	return false
 }
 
 func isEnemy(x int, y int, maxX int, maxY int, track []*cell, source *cell) (*cell, bool) {
@@ -241,8 +242,11 @@ func deduceNextCell(oldX int, oldY int, maxX int, maxY int, track []*cell) (newX
 	for _, idOfEnemy := range idsOfEnemies {
 		//fmt.Printf("shortest between %v->%v\n", oldId, idOfEnemy)
 		path, err := graph.Shortest(oldId, idOfEnemy)
+		if path.Path == nil {
+			continue
+		}
 		if err != nil {
-			return -1, -1, false
+			continue
 		}
 		if bestPath == nil {
 			bestPath = &path
