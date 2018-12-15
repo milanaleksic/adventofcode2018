@@ -76,7 +76,7 @@ func part1(maxX, maxY int, track []*cell) (int, int) {
 					continue
 				}
 				if newX, newY, ok := deduceNextCell(x, y, maxX, maxY, track); ok {
-					fmt.Printf("%v moves from %d,%d to %d,%d\n", cur.player.plType, x, y, newX, newY)
+					fmt.Printf("%v moves from %d,%d (%v) to %d,%d (%v)\n", cur.player.plType, x, y, linear(x, y, maxX, maxY), newX, newY, linear(newX, newY, maxX, maxY))
 					newLoc := track[linear(newX, newY, maxX, maxY)]
 					newLoc.player = cur.player
 					newLoc.player.lastTick = tick
@@ -94,6 +94,7 @@ func deduceNextCell(oldX int, oldY int, maxX int, maxY int, track []*cell) (newX
 	oldId := linear(oldX, oldY, maxX, maxY)
 	old := track[oldId]
 	graph := dijkstra.NewGraph()
+	graph.AddVertex(oldId)
 	for y := 0; y < maxY; y++ {
 		for x := 0; x < maxX; x++ {
 			id := linear(x, y, maxX, maxY)
@@ -104,8 +105,10 @@ func deduceNextCell(oldX int, oldY int, maxX int, maxY int, track []*cell) (newX
 			if old.player != nil && iter.player != nil && old.player.plType != iter.player.plType {
 				idsOfEnemies = append(idsOfEnemies, id)
 			}
-			//fmt.Printf("Adding vertex %v,%v (%v)\n", x, y, id)
-			graph.AddVertex(id)
+			if iter.player == nil || (iter.player != nil && old.player.plType != iter.player.plType) {
+				//fmt.Printf("Adding vertex %v,%v (%v)\n", x, y, id)
+				graph.AddVertex(id)
+			}
 		}
 	}
 	for y := 0; y < maxY; y++ {
@@ -115,17 +118,18 @@ func deduceNextCell(oldX int, oldY int, maxX int, maxY int, track []*cell) (newX
 			if iter.underlying == WALL {
 				continue
 			}
-			maybeReport(x, y-1, maxX, maxY, track, graph, id, 0)
-			maybeReport(x-1, y, maxX, maxY, track, graph, id, 1)
-			maybeReport(x+1, y, maxX, maxY, track, graph, id, 10)
-			maybeReport(x, y+1, maxX, maxY, track, graph, id, 100)
+			maybeReport(x, y-1, maxX, maxY, track, graph, id, oldId, 0)
+			maybeReport(x-1, y, maxX, maxY, track, graph, id, oldId, 1)
+			maybeReport(x+1, y, maxX, maxY, track, graph, id, oldId, 10)
+			maybeReport(x, y+1, maxX, maxY, track, graph, id, oldId, 100)
 		}
 	}
 	var bestPath *dijkstra.BestPath = nil
 	for _, idOfEnemy := range idsOfEnemies {
+		fmt.Printf("shortest between %v->%v\n", oldId, idOfEnemy)
 		path, err := graph.Shortest(oldId, idOfEnemy)
 		if err != nil {
-			log.Fatal("Shortest path couldn't be found", err)
+			return -1, -1, false
 		}
 		if bestPath == nil {
 			bestPath = &path
@@ -149,23 +153,25 @@ func deduceNextCell(oldX int, oldY int, maxX int, maxY int, track []*cell) (newX
 	return firstStep % maxX, firstStep / maxX, true
 }
 
-func maybeReport(x int, y int, maxX int, maxY int, track []*cell, graph *dijkstra.Graph, id int, price int64) {
+func maybeReport(x int, y int, maxX int, maxY int, track []*cell, graph *dijkstra.Graph, id, oldId int, price int64) {
 	curr := track[id]
+	source := track[oldId]
 	if neighborId, ok := maybeGet(x, y, maxX, maxY); ok {
 		neighbor := track[neighborId]
 		if neighbor.underlying == EMPTY && curr.underlying == EMPTY {
-			if neighbor.player != nil && curr.player != nil && neighbor.player.plType == curr.player.plType {
+			if neighbor.player != nil && neighbor.player.plType == source.player.plType {
 				return
 			}
-			//fmt.Printf("Adding arc %v<->%v (price %d)\n", id, neighborId, price)
+			//fmt.Printf("Adding arc %v->%v (price %d)\n", id, neighborId, price)
 			err := graph.AddArc(id, neighborId, price)
 			if err != nil {
-				log.Fatalf("Could not add arc between %v and %v: %v", neighborId, id, err)
+				if err.Error() == "Source/Destination not found" {
+					fmt.Printf("Source(%v)/Destination(%v) not found\n", id, neighborId)
+					return
+				} else {
+					log.Fatalf("Could not add arc between %v and %v: %v", neighborId, id, err)
+				}
 			}
-			//err = graph.AddArc(id, neighborId, price)
-			//if err != nil {
-			//	log.Fatalf("Could not add arc between %v and %v: %v", id, neighborId, err)
-			//}
 		}
 	}
 }
