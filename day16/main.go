@@ -6,12 +6,13 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"reflect"
 	"regexp"
 	"strconv"
 )
 
 type state struct {
-	reg1, reg2, reg3, reg4 int
+	registers []int
 }
 
 type behavior struct {
@@ -30,8 +31,11 @@ type instruction struct {
 	output          int
 }
 
+type instrLogic func(input1, input2, output int, inputState, outputState *state)
+
 func main() {
 	file, err := os.Open("day16/input.txt")
+	//file, err := os.Open("day16/test.txt")
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -88,10 +92,12 @@ func main() {
 			fullMatchesBefore := beforeRegex.FindAllStringSubmatch(line.Value.(string), -1)
 			matchesBefore := fullMatchesBefore[0]
 			beforeState := &state{
-				reg1: forceInt(matchesBefore[1]),
-				reg2: forceInt(matchesBefore[2]),
-				reg3: forceInt(matchesBefore[3]),
-				reg4: forceInt(matchesBefore[4]),
+				registers: []int{
+					forceInt(matchesBefore[1]),
+					forceInt(matchesBefore[2]),
+					forceInt(matchesBefore[3]),
+					forceInt(matchesBefore[4]),
+				},
 			}
 			line = line.Next()
 
@@ -105,12 +111,13 @@ func main() {
 			fullMatchesAfter := afterRegex.FindAllStringSubmatch(line.Value.(string), -1)
 			matchesAfter := fullMatchesAfter[0]
 			afterState := &state{
-				reg1: forceInt(matchesAfter[1]),
-				reg2: forceInt(matchesAfter[2]),
-				reg3: forceInt(matchesAfter[3]),
-				reg4: forceInt(matchesAfter[4]),
+				registers: []int{
+					forceInt(matchesAfter[1]),
+					forceInt(matchesAfter[2]),
+					forceInt(matchesAfter[3]),
+					forceInt(matchesAfter[4]),
+				},
 			}
-			line = line.Next()
 
 			b := behavior{
 				before: beforeState,
@@ -126,7 +133,109 @@ func main() {
 			behaviors = append(behaviors, &b)
 		}
 	}
+	architecture := createKnownArchitecture()
+	numberOfMoreThanThreeMatches := part1(architecture, behaviors)
+	fmt.Printf("Number of samples that have behavior like >=3 instructions: %v", numberOfMoreThanThreeMatches)
+}
 
+func part1(architecture map[string]instrLogic, behaviors []*behavior) (numberOfMoreThanThreeMatches int) {
+	for _, b := range behaviors {
+		numberOfMatches := 0
+		for opName, op := range architecture {
+			sandbox := &state{
+				registers: make([]int, 4),
+			}
+			for i := 0; i < len(b.before.registers); i++ {
+				sandbox.registers[i] = b.before.registers[i]
+			}
+			op(b.instruction.input1, b.instruction.input2, b.instruction.output, sandbox, sandbox)
+			if reflect.DeepEqual(sandbox, b.after) {
+				fmt.Println("Behaves like: ", opName)
+				numberOfMatches++
+			}
+		}
+		if numberOfMatches >= 3 {
+			numberOfMoreThanThreeMatches++
+		}
+	}
+	return
+}
+
+func createKnownArchitecture() map[string]instrLogic {
+	knownOperations := make(map[string]instrLogic, 0)
+	knownOperations["addr"] = func(input1, input2, output int, inputData *state, outputData *state) {
+		outputData.registers[output] = inputData.registers[input1] + inputData.registers[input2]
+	}
+	knownOperations["addi"] = func(input1, input2, output int, inputData *state, outputData *state) {
+		outputData.registers[output] = inputData.registers[input1] + input2
+	}
+	knownOperations["mulr"] = func(input1, input2, output int, inputData *state, outputData *state) {
+		outputData.registers[output] = inputData.registers[input1] * inputData.registers[input2]
+	}
+	knownOperations["muli"] = func(input1, input2, output int, inputData *state, outputData *state) {
+		outputData.registers[output] = inputData.registers[input1] * input2
+	}
+	knownOperations["banr"] = func(input1, input2, output int, inputData *state, outputData *state) {
+		outputData.registers[output] = inputData.registers[input1] & inputData.registers[input2]
+	}
+	knownOperations["bani"] = func(input1, input2, output int, inputData *state, outputData *state) {
+		outputData.registers[output] = inputData.registers[input1] & input2
+	}
+	knownOperations["borr"] = func(input1, input2, output int, inputData *state, outputData *state) {
+		outputData.registers[output] = inputData.registers[input1] | inputData.registers[input2]
+	}
+	knownOperations["bori"] = func(input1, input2, output int, inputData *state, outputData *state) {
+		outputData.registers[output] = inputData.registers[input1] | input2
+	}
+	knownOperations["setr"] = func(input1, input2, output int, inputData *state, outputData *state) {
+		outputData.registers[output] = inputData.registers[input1]
+	}
+	knownOperations["seti"] = func(input1, input2, output int, inputData *state, outputData *state) {
+		outputData.registers[output] = input1
+	}
+	knownOperations["gtir"] = func(input1, input2, output int, inputData *state, outputData *state) {
+		if input1 > inputData.registers[input2] {
+			outputData.registers[output] = 1
+		} else {
+			outputData.registers[output] = 0
+		}
+	}
+	knownOperations["gtri"] = func(input1, input2, output int, inputData *state, outputData *state) {
+		if inputData.registers[input1] > input2 {
+			outputData.registers[output] = 1
+		} else {
+			outputData.registers[output] = 0
+		}
+	}
+	knownOperations["gtrr"] = func(input1, input2, output int, inputData *state, outputData *state) {
+		if inputData.registers[input1] > inputData.registers[input2] {
+			outputData.registers[output] = 1
+		} else {
+			outputData.registers[output] = 0
+		}
+	}
+	knownOperations["eqir"] = func(input1, input2, output int, inputData *state, outputData *state) {
+		if input1 == inputData.registers[input2] {
+			outputData.registers[output] = 1
+		} else {
+			outputData.registers[output] = 0
+		}
+	}
+	knownOperations["eqri"] = func(input1, input2, output int, inputData *state, outputData *state) {
+		if inputData.registers[input1] == input2 {
+			outputData.registers[output] = 1
+		} else {
+			outputData.registers[output] = 0
+		}
+	}
+	knownOperations["eqrr"] = func(input1, input2, output int, inputData *state, outputData *state) {
+		if inputData.registers[input1] == inputData.registers[input2] {
+			outputData.registers[output] = 1
+		} else {
+			outputData.registers[output] = 0
+		}
+	}
+	return knownOperations
 }
 
 func forceInt(x string) int {
