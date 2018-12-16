@@ -86,7 +86,7 @@ func main() {
 				input2:          input2,
 				output:          output,
 			}
-			fmt.Printf("Found instruction x=%v\n", instruction)
+			//fmt.Printf("Found instruction x=%v\n", instruction)
 			instructions = append(instructions, instruction)
 		} else {
 			fullMatchesBefore := beforeRegex.FindAllStringSubmatch(line.Value.(string), -1)
@@ -129,18 +129,21 @@ func main() {
 					output:          output,
 				},
 			}
-			fmt.Printf("Found behavior x=%v\n", &b)
+			//fmt.Printf("Found behavior x=%v\n", &b)
 			behaviors = append(behaviors, &b)
 		}
 	}
 	architecture := createKnownArchitecture()
 	numberOfMoreThanThreeMatches := part1(architecture, behaviors)
-	fmt.Printf("Number of samples that have behavior like >=3 instructions: %v", numberOfMoreThanThreeMatches)
+	fmt.Printf("Number of samples that have behavior like >=3 instructions: %v\n", numberOfMoreThanThreeMatches)
+	resultInRegister0 := part2(architecture, instructions, behaviors)
+	fmt.Printf("After executing the program, value in register 0 is: %v\n", resultInRegister0)
 }
 
-func part1(architecture map[string]instrLogic, behaviors []*behavior) (numberOfMoreThanThreeMatches int) {
+func part2(architecture map[string]instrLogic, instructions []*instruction, behaviors []*behavior) int {
+	opCodeToOpCodeName := make(map[int][]string)
 	for _, b := range behaviors {
-		numberOfMatches := 0
+		matches := make([]string, 0)
 		for opName, op := range architecture {
 			sandbox := &state{
 				registers: make([]int, 4),
@@ -150,7 +153,90 @@ func part1(architecture map[string]instrLogic, behaviors []*behavior) (numberOfM
 			}
 			op(b.instruction.input1, b.instruction.input2, b.instruction.output, sandbox, sandbox)
 			if reflect.DeepEqual(sandbox, b.after) {
-				fmt.Println("Behaves like: ", opName)
+				//fmt.Println("Behaves like: ", opName)
+				matches = append(matches, opName)
+			}
+		}
+		opCode := b.instruction.instructionType
+
+		knownOpcodeNames, ok := opCodeToOpCodeName[opCode]
+		if !ok {
+			opCodeToOpCodeName[opCode] = matches
+		} else {
+			newOpcodeNames := make([]string, 0)
+			known := make(map[string]bool)
+			for _, k := range knownOpcodeNames {
+				known[k] = true
+			}
+			for _, matched := range matches {
+				if known[matched] {
+					newOpcodeNames = append(newOpcodeNames, matched)
+				}
+			}
+			opCodeToOpCodeName[opCode] = newOpcodeNames
+		}
+	}
+	iterCleanup := 0
+	for {
+		iterCleanup++
+		fmt.Printf("Cleanup iteration %v\n", iterCleanup)
+		for opName, op := range opCodeToOpCodeName {
+			fmt.Printf("Currently known mapping: %+v -> %v\n", opName, op)
+		}
+		allAreWithSingleMapping := true
+		for _, op := range opCodeToOpCodeName {
+			if len(op) > 1 {
+				allAreWithSingleMapping = false
+			}
+		}
+		if allAreWithSingleMapping {
+			break
+		}
+
+		for i, op := range opCodeToOpCodeName {
+			if len(op) == 1 {
+				knownOp := op[0]
+				for j, ops := range opCodeToOpCodeName {
+					if j == i {
+						continue
+					}
+					newOpcodeNames := make([]string, 0)
+					for _, op := range ops {
+						if op != knownOp {
+							newOpcodeNames = append(newOpcodeNames, op)
+						}
+					}
+					if len(newOpcodeNames) < len(ops) {
+						opCodeToOpCodeName[j] = newOpcodeNames
+					}
+				}
+			}
+		}
+	}
+	cpu := &state{
+		registers: []int{0, 0, 0, 0},
+	}
+	for _, i := range instructions {
+		op := opCodeToOpCodeName[i.instructionType]
+		logic := architecture[op[0]]
+		logic(i.input1, i.input2, i.output, cpu, cpu)
+	}
+	return cpu.registers[0]
+}
+
+func part1(architecture map[string]instrLogic, behaviors []*behavior) (numberOfMoreThanThreeMatches int) {
+	for _, b := range behaviors {
+		numberOfMatches := 0
+		for _, op := range architecture {
+			sandbox := &state{
+				registers: make([]int, 4),
+			}
+			for i := 0; i < len(b.before.registers); i++ {
+				sandbox.registers[i] = b.before.registers[i]
+			}
+			op(b.instruction.input1, b.instruction.input2, b.instruction.output, sandbox, sandbox)
+			if reflect.DeepEqual(sandbox, b.after) {
+				//fmt.Println("Behaves like: ", opName)
 				numberOfMatches++
 			}
 		}
