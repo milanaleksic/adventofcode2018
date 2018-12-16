@@ -232,10 +232,17 @@ func deduceNextCell(oldX int, oldY int, maxX int, maxY int, track []*cell) (newX
 			if iter.underlying == WALL {
 				continue
 			}
-			maybeReport(x, y-1, maxX, maxY, track, graph, id, oldId, 1)
-			maybeReport(x-1, y, maxX, maxY, track, graph, id, oldId, 2)
-			maybeReport(x+1, y, maxX, maxY, track, graph, id, oldId, 3)
-			maybeReport(x, y+1, maxX, maxY, track, graph, id, oldId, 4)
+			if oldX == x && oldY == y {
+				maybeReport(x, y-1, maxX, maxY, track, graph, id, oldId, 5)
+				maybeReport(x-1, y, maxX, maxY, track, graph, id, oldId, 6)
+				maybeReport(x+1, y, maxX, maxY, track, graph, id, oldId, 7)
+				maybeReport(x, y+1, maxX, maxY, track, graph, id, oldId, 8)
+			} else {
+				maybeReport(x, y-1, maxX, maxY, track, graph, id, oldId, 5)
+				maybeReport(x-1, y, maxX, maxY, track, graph, id, oldId, 5)
+				maybeReport(x+1, y, maxX, maxY, track, graph, id, oldId, 5)
+				maybeReport(x, y+1, maxX, maxY, track, graph, id, oldId, 5)
+			}
 		}
 	}
 	var bestPath *dijkstra.BestPath = nil
