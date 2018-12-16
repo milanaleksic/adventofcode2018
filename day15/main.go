@@ -48,9 +48,15 @@ func main() {
 	ls := list.New()
 	readAll(file, ls)
 
-	maxX, maxY, track := fromInput(ls)
-	endTick, solution1 := part1(maxX, maxY, track)
-	fmt.Printf("Solution part 1 is: %v (on tick %v)", solution1, endTick)
+	maxX, maxY, originalTrack := fromInput(ls)
+
+	track1 := copyTrack(originalTrack, 3)
+	endTick1, solution1 := part1(maxX, maxY, track1)
+	fmt.Printf("Solution part 1 is: %v (on tick %v)", solution1, endTick1)
+
+	track2 := copyTrack(originalTrack, 3)
+	endTick2, solution2, minPower := part2(maxX, maxY, track2)
+	fmt.Printf("Solution part 2 is: %v (on tick %v, with power=%v)", solution2, endTick2, minPower)
 }
 
 func fromInput(ls *list.List) (int, int, []*cell) {
@@ -120,8 +126,8 @@ func part1(maxX, maxY int, track []*cell) (maxReachedTick int, result int) {
 
 func part2(maxX, maxY int, originalTrack []*cell) (maxReachedTick int, result int, minPower int) {
 	maxTick := 500
-	maxPower := 15
-	for power := 15; power <= maxPower; power++ {
+	maxPower := 500
+	for power := 4; power <= maxPower; power++ {
 		track := copyTrack(originalTrack, power)
 		for tick := 0; tick < maxTick; tick++ {
 			fmt.Printf("######################### TICK: %d (power: %v)\n", tick, power)
