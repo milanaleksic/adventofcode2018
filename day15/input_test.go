@@ -14,8 +14,6 @@ func TestInput1(t *testing.T) {
 		expectedEndTick  int
 		expectedSolution int
 	}{
-		//{"#####\n#G..#\n#E#E#\n#G.##\n#####", 37, 36334},
-
 		{"#######\n#.G...#\n#...EG#\n#.#.#G#\n#..G#E#\n#.....#\n#######", 47, 27730},
 		{"#######\n#G..#E#\n#E#E.E#\n#G.##.#\n#...#E#\n#...E.#\n#######", 37, 36334},
 		{"#######\n#E..EG#\n#.#G.E#\n#E.##E#\n#G..#.#\n#..E#.#\n#######", 46, 39514},
