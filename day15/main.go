@@ -118,6 +118,91 @@ func part1(maxX, maxY int, track []*cell) (maxReachedTick int, result int) {
 	return 0, 0
 }
 
+func part2(maxX, maxY int, originalTrack []*cell) (maxReachedTick int, result int, minPower int) {
+	maxTick := 500
+	maxPower := 15
+	for power := 15; power <= maxPower; power++ {
+		track := copyTrack(originalTrack, power)
+		for tick := 0; tick < maxTick; tick++ {
+			fmt.Printf("######################### TICK: %d (power: %v)\n", tick, power)
+			elfKilledInThisRound := false
+			for y := 0; y < maxY; y++ {
+				for x := 0; x < maxX; x++ {
+					cur := track[linear(x, y, maxX, maxY)]
+					if cur.player == nil || cur.player.lastTick >= tick {
+						continue
+					}
+					if newX, newY, ok := deduceNextCell(x, y, maxX, maxY, track); ok {
+						//fmt.Printf("%v moves from %d,%d (%v) to %d,%d (%v)\n", cur.player.plType, x, y, linear(x, y, maxX, maxY), newX, newY, linear(newX, newY, maxX, maxY))
+						newLoc := track[linear(newX, newY, maxX, maxY)]
+						newLoc.player = cur.player
+						newLoc.player.lastTick = tick
+						cur.player = nil
+						if killed := attackPhase(newX, newY, maxX, maxY, track); killed != nil && *killed == ELF {
+							elfKilledInThisRound = true
+						}
+					} else {
+						kindsOfEnemies := 0
+						for y := 0; y < maxY; y++ {
+							for x := 0; x < maxX; x++ {
+								iter := track[linear(x, y, maxX, maxY)]
+								if iter.player != nil {
+									if iter.player.plType == ELF {
+										kindsOfEnemies |= 1
+									} else if iter.player.plType == GOBLIN {
+										kindsOfEnemies |= 2
+									}
+								}
+							}
+						}
+						if kindsOfEnemies == 2 {
+							fmt.Println("All elves died!")
+							elfKilledInThisRound = true
+						}
+						if kindsOfEnemies == 1 {
+							fmt.Println("Elves won!")
+							return tick - 1, (tick - 1) * sumState(maxX, maxY, track), power
+						}
+						if killed := attackPhase(x, y, maxX, maxY, track); killed != nil && *killed == ELF {
+							elfKilledInThisRound = true
+						}
+					}
+				}
+			}
+			printState(maxY, maxX, track)
+			if elfKilledInThisRound {
+				fmt.Printf("Cancelling further with power %v since an elf died\n", power)
+				break
+			}
+		}
+	}
+	return 0, 0, 0
+}
+
+func copyTrack(cells []*cell, elfPower int) []*cell {
+	result := make([]*cell, len(cells))
+	for i, c := range cells {
+		result[i] = &cell{
+			x:          c.x,
+			y:          c.y,
+			underlying: c.underlying,
+		}
+		if c.player != nil {
+			result[i].player = &player{
+				plType:    c.player.plType,
+				hitPoints: c.player.hitPoints,
+				lastTick:  c.player.lastTick,
+			}
+			if c.player.plType == ELF {
+				result[i].player.attackPower = elfPower
+			} else {
+				result[i].player.attackPower = c.player.attackPower
+			}
+		}
+	}
+	return result
+}
+
 func sumState(maxX, maxY int, track []*cell) int {
 	sum := 0
 	for y := 0; y < maxY; y++ {
@@ -150,11 +235,11 @@ func hasEnemyAround(x int, y int, maxX int, maxY int, track []*cell) bool {
 	return false
 }
 
-func attackPhase(x int, y int, maxX int, maxY int, track []*cell) bool {
+func attackPhase(x int, y int, maxX int, maxY int, track []*cell) *cellType {
 	var targets = make([]*cell, 0)
 	source := track[linear(x, y, maxX, maxY)]
 	if source.player == nil {
-		return false
+		return nil
 	}
 	if neighbor, ok := isEnemy(x, y-1, maxX, maxY, track, source); ok {
 		targets = append(targets, neighbor)
@@ -169,7 +254,7 @@ func attackPhase(x int, y int, maxX int, maxY int, track []*cell) bool {
 		targets = append(targets, neighbor)
 	}
 	if len(targets) == 0 {
-		return false
+		return nil
 	}
 	minTargetPoints := -1
 	var chosenTarget *cell
@@ -181,11 +266,12 @@ func attackPhase(x int, y int, maxX int, maxY int, track []*cell) bool {
 	}
 	chosenTarget.player.hitPoints -= source.player.attackPower
 	if chosenTarget.player.hitPoints <= 0 {
+		t := chosenTarget.player.plType
 		fmt.Printf("player died on %v,%v\n", chosenTarget.x, chosenTarget.y)
 		chosenTarget.player = nil
-		return true
+		return &t
 	}
-	return false
+	return nil
 }
 
 func isEnemy(x int, y int, maxX int, maxY int, track []*cell, source *cell) (*cell, bool) {

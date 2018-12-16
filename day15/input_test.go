@@ -65,6 +65,29 @@ func TestInput1(t *testing.T) {
 	}
 }
 
+func TestInput2(t *testing.T) {
+	values := []struct {
+		initialState     string
+		expectedEndTick  int
+		expectedSolution int
+		expectedMinPower int
+	}{
+		{"#######\n#.G...#\n#...EG#\n#.#.#G#\n#..G#E#\n#.....#\n#######", 29, 4988, 15},
+		{"#######\n#E..EG#\n#.#G.E#\n#E.##E#\n#G..#.#\n#..E#.#\n#######", 33, 31284, 4},
+		{"#######\n#E.G#.#\n#.#G..#\n#G.#.G#\n#G..#.#\n#...E.#\n#######", 37, 3478, 15},
+		{"#######\n#.E...#\n#.#..G#\n#.###.#\n#E#G#G#\n#...#G#\n#######", 39, 6474, 12},
+		{"#########\n#G......#\n#.E.#...#\n#..##..G#\n#...##..#\n#...#...#\n#.G...G.#\n#.....G.#\n#########", 30, 1140, 34},
+	}
+	for _, v := range values {
+		actualEndTick, actualSolution, actualMinPower := part2(fromInput(makeList(v.initialState)))
+		if v.expectedEndTick != actualEndTick || actualSolution != v.expectedSolution || actualMinPower != v.expectedMinPower {
+			t.Errorf("Failed to match result tick=%d (expected %d), solution=%d (expected %d), power=%d (expected %d)", actualEndTick, v.expectedEndTick, actualSolution, v.expectedSolution, actualMinPower, v.expectedMinPower)
+		} else {
+			t.Log("Match!")
+		}
+	}
+}
+
 func makeList(input string) *list.List {
 	ls := list.New()
 	scanner := bufio.NewScanner(strings.NewReader(input))
