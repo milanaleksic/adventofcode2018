@@ -44,10 +44,12 @@ func main() {
 	readAll(file, ls)
 	minX, maxX, minY, maxY, track := fromInput(ls)
 	fmt.Printf("minX=%v, maxX=%v, minY=%v, maxY=%v\n", minX, maxX, minY, maxY)
-	fmt.Printf("Solution to part 1 is: %v\n", part1(minX, maxX, minY, maxY, track))
+	count, countStable := part1And2(minX, maxX, minY, maxY, track)
+	fmt.Printf("Solution to part 1 is: %v\n", count)
+	fmt.Printf("Solution to part 2 is: %v\n", countStable)
 }
 
-func part1(minX int, maxX int, minY, maxY int, ground []*cell) (count int) {
+func part1And2(minX int, maxX int, minY, maxY int, ground []*cell) (count, countStable int) {
 	maxIter := 35000
 	//maxIter := 38489
 	ground[linear(500, 0, maxX, maxY)].underlying = SPRING
@@ -71,19 +73,26 @@ func part1(minX int, maxX int, minY, maxY int, ground []*cell) (count int) {
 	return countDrops(minX, maxX, minY, maxY, ground)
 }
 
-func countDrops(minX int, maxX int, minY, maxY int, cells []*cell) (count int) {
+func countDrops(minX int, maxX int, minY, maxY int, cells []*cell) (count, countStable int) {
 	count = 0
+	countStable = 0
 	for x := minX; x <= maxX; x++ {
 		for y := 0; y <= maxY; y++ {
 			cell := cells[linear(x, y, maxX, maxY)]
-			if cell.underlying == WATER_FALLING || cell.underlying == WATER_STABLE {
+			if cell.underlying == WATER_FALLING {
 				if y >= minY {
 					count++
 				}
 			}
+			if cell.underlying == WATER_STABLE {
+				if y >= minY {
+					count++
+					countStable++
+				}
+			}
 		}
 	}
-	return count
+	return count, countStable
 }
 
 func findNextRestingPlace(x, y int, minX int, maxX int, minY int, maxY int, ground []*cell, direction int) (newX, newY int, fallth bool) {
@@ -213,14 +222,18 @@ func cascadedDeduceForLine(x int, y int, minX int, maxX int, maxY int, ground []
 	if oneSideIsFallthrough {
 		for ix := x; ix >= minX; ix-- {
 			iter := ground[linear(ix, y, maxX, maxY)]
-			if iter.underlying == SAND || iter.underlying == CLAY {
+			if iter.underlying == WATER_STABLE {
+				iter.underlying = WATER_FALLING
+			} else if iter.underlying == SAND || iter.underlying == CLAY {
 				break
 			}
 			iter.fallThrough = true
 		}
 		for ix := x; ix <= maxX; ix++ {
 			iter := ground[linear(ix, y, maxX, maxY)]
-			if iter.underlying == SAND || iter.underlying == CLAY {
+			if iter.underlying == WATER_STABLE {
+				iter.underlying = WATER_FALLING
+			} else if iter.underlying == SAND || iter.underlying == CLAY {
 				break
 			}
 			iter.fallThrough = true
