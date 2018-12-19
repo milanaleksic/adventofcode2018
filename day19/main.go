@@ -109,8 +109,8 @@ func main() {
 	}
 
 	//PART 2
-	fmt.Printf("Sum is: %v\n", sumFactors(1008))
-	fmt.Printf("Sum is: %v\n", sumFactors(10551408))
+	fmt.Printf("Optimized calcultion for part 1 is: %v\n", sumFactors(1008))
+	fmt.Printf("Optimized calcultion for part 2 is: %v\n", sumFactors(10551408))
 }
 
 func sumFactors(number int) (result int) {
