@@ -11,8 +11,6 @@ import (
 )
 
 type cell struct {
-	x           int
-	y           int
 	underlying  cellType
 	fallThrough bool
 }
