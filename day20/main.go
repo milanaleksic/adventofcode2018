@@ -47,11 +47,17 @@ func main() {
 	fmt.Printf("Solution to part 1 is: %v", part1(inputLine.Value.(string)))
 }
 
+var dists = make(map[coord]*path)
+
 func part1(input string) int {
-	dists := make(map[coord]*path)
 	explodeRegex(input, func(output string) {
-		howFar(output, dists)
+		howFar(output)
 	})
+	maxDist := getBestProposal()
+	return len(maxDist.path)
+}
+
+func getBestProposal() *path {
 	var maxDist *path
 	for _, p := range dists {
 		if maxDist == nil {
@@ -60,10 +66,10 @@ func part1(input string) int {
 			maxDist = p
 		}
 	}
-	return len(maxDist.path)
+	return maxDist
 }
 
-func howFar(input string, dists map[coord]*path) {
+func howFar(input string) {
 	locX, locY := 0, 0
 	iter := 0
 	for _, x := range input {
@@ -106,7 +112,7 @@ func explodeRegex(input string, outputHandler func(string)) {
 		explodedN, changed := simplify(nodes)
 		if changed {
 			for _, e := range explodedN {
-				queue.PushFront(e)
+				queue.PushBack(e)
 			}
 		} else {
 			outputHandler(toString(nodes))
@@ -114,8 +120,8 @@ func explodeRegex(input string, outputHandler func(string)) {
 		if queue.Len() == 0 {
 			break
 		} else {
-			if iter%1000 == 0 {
-				fmt.Printf("Simplification found, current size (working): %d, processed so far: %d\n", queue.Len(), iter)
+			if iter%5000 == 0 && iter > 0 {
+				fmt.Printf("Simplification found, current size (working): %d, processed so far: %d, best proposal: %v\n", queue.Len(), iter, len(getBestProposal().path))
 			}
 			iter++
 		}
