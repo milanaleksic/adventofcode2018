@@ -5,11 +5,23 @@ import (
 	"container/list"
 	"fmt"
 	"log"
-	"math"
 	"os"
 )
 
 type typeNode int
+
+type coord struct {
+	x, y int
+}
+
+type path struct {
+	dist int
+	path string
+}
+
+func (p *path) String() string {
+	return fmt.Sprintf("dist=%v, path=%v", p.dist, p.path)
+}
 
 const (
 	Normal typeNode = iota
@@ -36,25 +48,26 @@ func main() {
 }
 
 func part1(input string) int {
-	var bestSoFar float64 = -1
-	var bestPathSoFar string
+	dists := make(map[coord]*path)
 	explodeRegex(input, func(output string) {
-		distance := howFar(input)
-		if distance > bestSoFar {
-			bestSoFar = distance
-			bestPathSoFar = output
-			fmt.Printf("New best destination (%v, path length=%d) via %v\n", distance, len(output), output)
-		} else if distance == bestSoFar && len(bestPathSoFar) > len(output) {
-			bestPathSoFar = output
-			fmt.Printf("New best destination (same distance but shorter path, %v for path length=%v) via %v\n", distance, len(output), output)
-		}
+		howFar(output, dists)
 	})
-	return len(bestPathSoFar)
+	var maxDist *path
+	for _, p := range dists {
+		if maxDist == nil {
+			maxDist = p
+		} else if p.dist > maxDist.dist {
+			maxDist = p
+		}
+	}
+	return len(maxDist.path)
 }
 
-func howFar(input string) float64 {
+func howFar(input string, dists map[coord]*path) {
 	locX, locY := 0, 0
+	iter := 0
 	for _, x := range input {
+		iter++
 		switch x {
 		case 'N':
 			locY += 1
@@ -65,8 +78,20 @@ func howFar(input string) float64 {
 		case 'W':
 			locX -= 1
 		}
+		c := coord{x: locX, y: locY}
+		if k, ok := dists[c]; ok {
+			if iter < k.dist {
+				k.dist = iter
+				k.path = input
+			}
+		} else {
+			dists[c] = &path{
+				path: input,
+				dist: iter,
+			}
+		}
 	}
-	return math.Hypot(float64(locX), float64(locY))
+	return
 }
 
 func explodeRegex(input string, outputHandler func(string)) {
