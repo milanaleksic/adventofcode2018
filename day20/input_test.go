@@ -10,7 +10,7 @@ func TestInput1(t *testing.T) {
 		expectedMaxLength int
 	}{
 		{`^NESW$`, 4},
-		{"^WSS(S|NE)$", 3}, // my examples
+		{"^WSS(S|NE)$", 5}, // my examples
 		{`^N(EE|N)N$`, 4},
 		//
 		{`^EEE(WWEE|)$`, 3},
@@ -31,8 +31,8 @@ func TestInput1(t *testing.T) {
 }
 
 func TestExplode(t *testing.T) {
-	logger := func(output map[string]bool) func(path string) {
-		return func(path string) {
+	logger := func(output map[string]bool) func(qln int, path string) {
+		return func(ln int, path string) {
 			output[path] = true
 		}
 	}
