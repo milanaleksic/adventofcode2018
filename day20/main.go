@@ -108,7 +108,7 @@ func howFar(input string, dists map[coord]*path) {
 func explodeRegex(input string, outputHandler func(int, string)) {
 	l, _ := makePaths(input, 0)
 	queue := list.New()
-	queue.PushBack(l)
+	queue.PushFront(l)
 	for {
 		item := queue.Front()
 		queue.Remove(item)
