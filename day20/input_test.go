@@ -11,17 +11,17 @@ func TestInput1(t *testing.T) {
 	}{
 		//{`^NESW$`, 4},
 		//{"^WSS(S|NE)$", 5}, // my examples
-		{`^N(EE|N)N$`, 4},
+		//{`^N(EE|N)N$`, 4},
 		//{"^E(NN|S)E$", 4},
 		//{"^(N|S)N$", 2},
 		//{"^EEE(NN|SSS)EEE$", 9},
 		//{"^E(N|SS)EEE(E|SSS)$", 9},
 		//{`^EEE(WWEE|)$`, 3},
-		//{`^WNE$`, 3}, //their examples
-		//{`^ENWWW(NEEE|SSE(EE|N))$`, 10},
-		//{`^ENNWSWW(NEWS|)SSSEEN(WNSE|)EE(SWEN|)NNN$`, 18},
-		//{`^ESSWWN(E|NNENN(EESS(WNSE|)SSS|WWWSSSSE(SW|NNNE)))$`, 23},
-		//{"^WSSEESWWWNW(S|NENNEEEENN(ESSSSW(NWSW|SSEN)|WSWWN(E|WWS(E|SS))))$", 31},
+		{`^WNE$`, 3}, //their examples
+		{`^ENWWW(NEEE|SSE(EE|N))$`, 10},
+		{`^ENNWSWW(NEWS|)SSSEEN(WNSE|)EE(SWEN|)NNN$`, 18},
+		{`^ESSWWN(E|NNENN(EESS(WNSE|)SSS|WWWSSSSE(SW|NNNE)))$`, 23},
+		{"^WSSEESWWWNW(S|NENNEEEENN(ESSSSW(NWSW|SSEN)|WSWWN(E|WWS(E|SS))))$", 31},
 	}
 	for _, v := range values {
 		t.Run(v.initialState, func(t *testing.T) {
